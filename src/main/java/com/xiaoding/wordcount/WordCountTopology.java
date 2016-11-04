@@ -6,6 +6,7 @@ import com.xiaoding.wordcount.bolt.WordCountBolt;
 import com.xiaoding.wordcount.spout.SentenceSpout;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
+import org.apache.storm.StormSubmitter;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class WordCountTopology {
     //拓扑名称
     private final static String TOPOLOGY_NAME = "word-count-topology";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         log.info(".........begining.......");
         //各个组件的实例
@@ -56,6 +57,22 @@ public class WordCountTopology {
         LocalCluster cluster = new LocalCluster();
 
         //创建拓扑实例,并提交到本地集群进行运行
-        cluster.submitTopology(TOPOLOGY_NAME, config, topologyBuilder.createTopology());
+        if (args != null && args.length > 0) {
+            config.setNumWorkers(3);
+
+            StormSubmitter.submitTopologyWithProgressBar(args[0], config, topologyBuilder.createTopology());
+        }
+        else {
+            config.setMaxTaskParallelism(3);
+
+            LocalCluster localcluster = new LocalCluster();
+
+            localcluster.submitTopology(TOPOLOGY_NAME, config, topologyBuilder.createTopology());
+
+            Thread.sleep(10000);
+
+            cluster.shutdown();
+        }
+
     }
 }
